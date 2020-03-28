@@ -1,7 +1,8 @@
 from Network import simpleHost
+import time
+import server
 
-sh = simpleHost.simpleHost(1)
+sh = server.Server(12)
 sh.start()
-
 
 

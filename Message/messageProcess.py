@@ -5,12 +5,15 @@ import Configure.conf
 # 指令流处理模块
 # 该模块负责将输入进行处理并进行相应的动作
 # 处理层级: raw -> singleCommand -> [command, args] -> list([command, args])
+# 注意: 在分解成 args 的时候空格并不会消失，而是会保留到字串内，因此后续处理需要注意
 class MessageProcess(object):
     def __init__(self):
         pass
 
     # 将消息直接处理到最后一个等级, 并全部放到一个列表里面返回
     def split(self, raw):
+        if raw == "":
+            return None
         commands = self.splitInput(raw)
         result = []
         for command in commands:

@@ -88,8 +88,11 @@ class NetStream(object):
     def __sendBufThread(self):
         while self.netState == conf.NET_STATE_ESTABLISHED:
             if self.sendBuf != "" and self.netState == conf.NET_STATE_ESTABLISHED:
-                self.sock.sendall(self.sendBuf)
-                self.sendBuf = ""
+                try:
+                    self.sock.sendall(self.sendBuf)
+                    self.sendBuf = ""
+                except:
+                    pass
 
     # 消息接收用线程
     def __recvBufThread(self):
