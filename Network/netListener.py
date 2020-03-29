@@ -7,17 +7,20 @@ import Configure.conf as conf
 # 网络监听模块
 # 该模块负责监听外部连接，并将这些外部连接暴露给其他使用到该模块的模块
 class NetListener(object):
-    socketListener = None
-    hostData = None
-    maxConnNum = 0
-    connList, addrList = [], []
-    listenThread = None
-    listenerState = conf.NET_STATE_STOP
-    needClear = False
-
     def __init__(self, host, port, num):
+        self.socketListener = None
+        self.hostData = None
+        self.maxConnNum = 0
+        self.connList = []
+        self.addrList = []
+        self.listenThread = None
+        self.listenerState = conf.NET_STATE_STOP
+
         self.hostData = (host, port)
         self.maxConnNum = num
+
+        self.needClear = False
+        self.clearNum = 0
 
     # 更改 host 信息
     def changeHost(self, host=None, port=None, num=None):
@@ -56,6 +59,7 @@ class NetListener(object):
                 self.connList = []
                 self.addrList = []
                 self.needClear = False
+                self.clearNum = 0
             self.connList.append(conn)
             self.addrList.append(addr)
 
@@ -68,13 +72,15 @@ class NetListener(object):
     def getAllConn(self):
         if self.needClear or self.listenerState != conf.NET_STATE_ESTABLISHED:
             return []
-        outputConn = self.connList[:]
-        outputAddr = self.addrList[:]
+        size = len(self.connList)
+        outputConn = self.connList[:size]
+        outputAddr = self.addrList[:size]
 
         # pair one conn with one addr to a list
-        outputPair = [[outputConn[x], outputAddr[x]] for x in range(len(self.connList))]
+        outputPair = [[outputConn[x], outputAddr[x]] for x in range(size)]
 
         self.needClear = True
+        self.clearNum = size
         return outputPair
 
     # 关闭监听器

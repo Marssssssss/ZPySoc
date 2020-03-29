@@ -17,18 +17,19 @@ class MessageProcess(object):
         commands = self.splitInput(raw)
         result = []
         for command in commands:
-            result.append(self.splitSingleCommand(command))
+            res = self.splitSingleCommand(command)
+            if res is not None:
+                result.append(res)
         return result
 
     # 将一条消息处理为多个单指令
+    # 当第一条指令前面还有非指令字符串时，该字符串会被忽略
     def splitInput(self, raw):
         commands = []  # every single command will be put into this list and ready to return
         msg = raw
 
         start = self.__strIndex(msg, "$")
         end = start
-        if start != 0:
-            return commands
         while end != -1:
             end = self.__strIndex(msg, "$", end + 1)
             if end == -1:

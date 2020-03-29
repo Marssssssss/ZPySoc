@@ -15,4 +15,15 @@ class EventHandler(object):
         return None
 
     def addEvent(self, name, msgEvent):
+        if name in self.eventDict.keys():
+            raise EventExistedError("Event has existed! Event name: " + name)
         self.eventDict[name] = msgEvent
+
+
+# '事件已存在'异常
+class EventExistedError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value

@@ -49,6 +49,10 @@ class SimpleHost(object):
 
         self.netState = conf.NET_STATE_CLOSING
 
+    # 关闭其中一个连接
+    def closeStream(self, sid):
+        self.__streamSlots[sid].close()
+
     # 赋予某一权限
     def invokePermission(self, sid, permit):
         self.userPermission[sid] |= permit
@@ -61,11 +65,12 @@ class SimpleHost(object):
     def checkPermission(self, sid, command):
         return self.userPermission[sid] & conf.permissionList[command] != 0
 
-    # 添加需要发送的消息, target = -1 表示广播
+    # 添加需要发送的消息
     def addMsgToSendBuffer(self, source, msg, target):
-        if target == -1:
+        if target == conf.NET_MSG_TARGET_BROADCAST:
             for index in range(self.maxClients):
                 self.sendBuffer.append([source, msg, index])
+            print msg
         else:
             self.sendBuffer.append([source, msg, target])
 
@@ -108,6 +113,7 @@ class SimpleHost(object):
         for sid in range(len(self.__streamSlots)):
             msg = self.__streamSlots[sid].getRecvData()
             if msg != "":
+                print msg
                 self.rawRecvBuffer[sid][1] += msg
 
     # 将所有的 rawRecvMessage 进一步处理为 sendMessage 要求的格式
@@ -124,13 +130,14 @@ class SimpleHost(object):
                 for midMsg in midMsgs:
                     # check command permission
                     if midMsg[0] in conf.permissionList.keys() and not self.checkPermission(sid, midMsg[0]):
-                        self.addMsgToSendBuffer(-1, "[Server]Sorry! You have no permission to use this command!", sid)
+                        self.addMsgToSendBuffer(-1, "[Server] Sorry! You have no permission to use command: " + midMsg[0]
+                                                , sid)
                         continue
 
                     # trigger event
                     response = self.evHandler.triggerEvent(midMsg, sid)  # triggerEvent([command, args], sid)
                     if response is None:
-                        self.addMsgToSendBuffer(-1, "[Server]Command error! Please check your command or arguments!"
+                        self.addMsgToSendBuffer(-1, "[Server] Command error! Please check your command or arguments!"
                                                     " Input $help for help!", sid)
                     else:
                         for result in response:
@@ -148,7 +155,7 @@ class SimpleHost(object):
             if self.__putIntoEmptyNetStreamSlot(connAddr):
                 successCount += 1
             else:
-                connAddr[0].sendall("[Server]Sorry, server is full!")
+                connAddr[0].sendall("[Server] Sorry, server is full!")
 
         return successCount
 
@@ -161,5 +168,7 @@ class SimpleHost(object):
                 return False
         self.userPermission[index] = conf.NET_PERMISSION_LOGIN | conf.NET_PERMISSION_CREATE
         self.__streamSlots[index].start()
+        print "[Server] Connected! Address: " + str(connAddr[1])
+        self.addMsgToSendBuffer(-1, "[Server] Welcome! Use command $help for help!", index)
         return True
 
